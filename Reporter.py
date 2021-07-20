@@ -29,7 +29,9 @@ class Reporter:
             print(_self.abcList[i].experimentID + " run: ", _self.abcList[i].globalOpt, " Cycle: ",
                   _self.abcList[i].cycle, " Time: ",
                   _self.abcList[i].globalTime)
+            print(_self.abcList[i].globalParams)
             sum.append(_self.abcList[i].globalOpt)
+
         print("Mean: ",np.mean(sum)," Std: ",np.std(sum)," Median: ",np.median(sum))
     def command_line_print(_self):
         sum = []

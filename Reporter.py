@@ -30,6 +30,8 @@ class Reporter:
                   _self.abcList[i].cycle, " Time: ",
                   _self.abcList[i].globalTime)
             print(_self.abcList[i].globalParams)
+            print("F1: " +str(_self.abcList[i].globalOptsf1)+" F2:  "+ str(_self.abcList[i].globalOptsf2) +" F3:  "+ str(_self.abcList[i].globalOptsf3) )
+
             sum.append(_self.abcList[i].globalOpt)
 
         print("Mean: ",np.mean(sum)," Std: ",np.std(sum)," Median: ",np.median(sum))

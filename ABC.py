@@ -126,7 +126,6 @@ class ABC:
         _self.cycle = 0
         _self.experimentID = 0
         _self.globalOpts = list()
-
         if (_self.conf.SHOW_PROGRESS):
             _self.progressbar = progressbar.ProgressBar(max_value=_self.conf.MAXIMUM_EVALUATION)
         if (not(conf.RANDOM_SEED)):
@@ -147,8 +146,8 @@ class ABC:
                         sucessores[i] = 0
                     else:
                         sucessores[i] = int(sucessores[i])
-                #Em caso de lista nula atribui 0 já que as tarefas começam com 1
-                #Este 0 é usado para controle na criação da população inicial
+                #Em caso de lista nula atribui 0 ja que as tarefas comecam com 1
+                #Este 0 e usado para controle na criacao da populacao inicial
                 for i in range(len(antecessores)):
                     if(antecessores[i] == "-"):
                         antecessores[i] = 0
@@ -284,8 +283,12 @@ class ABC:
         for i in range(_self.conf.FOOD_NUMBER):
             if (_self.f[i] < _self.globalOpt and _self.conf.MINIMIZE == True) or (_self.f[i] >= _self.globalOpt and _self.conf.MINIMIZE == False):
                 _self.globalOpt = np.copy(_self.f[i])
+                _self.globalOptsf1 = np.copy(_self.vetorf1[i])
+                _self.globalOptsf2 = np.copy(_self.vetorf2[i])
+                _self.globalOptsf3 = np.copy(_self.vetorf3[i])
                 _self.globalParams = np.copy(_self.foods[i][:])
-                print("Best solution " +str(_self.globalOpt)+" com os valores "+ str(_self.globalParams))
+                # print()
+                print("Best solution " +str(_self.globalOptsf1)+" com os valores "+ str(_self.globalParams))
 
 
     def init(_self, index):
@@ -297,8 +300,8 @@ class ABC:
                 ordenacao = []
                 ordena = 1
                 #Para cada tarefa lida do csv
-                # 1º ordena todas as tarefas sem predecessores
-                # 2º ordena as tarefas cujos predecessoes ja foram ordenados
+                # 1 ordena todas as tarefas sem predecessores
+                # 2  ordena as tarefas cujos predecessoes ja foram ordenados
                 # Repete a etapa 2 ate que todas as tarefas sejam ordenadas
                 for j in range(len(_self.entrada)):
                     #Tarefas sem predecessores
@@ -366,14 +369,15 @@ class ABC:
         for i in range(_self.conf.FOOD_NUMBER):
             _self.f[i] = _self.calculate_function(_self.foods[i][:],_self.finish[i], w1, w2, w3)
         _self.globalOpt = np.copy(_self.f[0])
+        _self.globalOptsf1 = np.copy(_self.vetorf1[0])
+        _self.globalOptsf2 = np.copy(_self.vetorf2[0])
+        _self.globalOptsf3 = np.copy(_self.vetorf3[0])
         _self.globalParams = np.copy(_self.foods[0][:])
 
     def send_employed_bees(_self):
         i = 0
         while (i < _self.conf.FOOD_NUMBER) and (not (_self.stopping_condition())):
-            #seleciona a posicao
-            r = random.choice([10,11,12,13,14,15,16,17,18,19])
-            _self.param2change = (int)(r)
+
 
             #Seleciona o vizinho que vai visitar aleatoriamente
             r = random.random()
@@ -383,12 +387,46 @@ class ABC:
                 _self.neighbour = (int)(r * _self.conf.FOOD_NUMBER)
             _self.solution = np.copy(_self.foods[i][:])
 
-
-
             ##essa e a parte que vamos colocar as operacoes de mudanca
             #implementar randomico para selecao da operacao 20% cada uma
-            r = random.choice([1,2,3,4])
-            _self.solution[_self.param2change] = r
+            #seleciona a posicao
+            r = random.choice([0,1,2])
+            # print(r)
+            if(r == 0):
+                # print("Swap")
+                r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                _self.param2change = (int)(r)
+                r = random.choice([1,2,3,4])
+                _self.solution[_self.param2change] = r
+            elif(r == 1):
+                # print("Exchange 1")
+                r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                _self.param2change = (int)(r)
+                r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                while r  == _self.param2change:
+                    r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                secondparam2change = (int)(r)
+                # print(_self.solution)
+                aux = _self.solution[secondparam2change]
+                _self.solution[secondparam2change] = _self.solution[_self.param2change]
+                _self.solution[_self.param2change] = aux
+                # print("Troca "+ str(secondparam2change)+ " com "+ str(_self.param2change))
+                # print(_self.solution)
+            else:
+                # print("Exchange 2")
+                r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                _self.param2change = (int)(r)
+                r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                while r  == _self.param2change:
+                    r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                secondparam2change = (int)(r)
+                # print(_self.solution)
+                aux = _self.solution[secondparam2change]
+                _self.solution[secondparam2change] = _self.solution[_self.param2change]
+                _self.solution[_self.param2change] = aux
+                # print("Troca "+ str(secondparam2change)+ " com "+ str(_self.param2change))
+                # print(_self.solution)
+
             earliest = _self.calcula_earliest(_self.solution)
             real,finish = _self.calcula_real(_self.solution)
 

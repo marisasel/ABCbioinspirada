@@ -10,7 +10,6 @@ class ABC:
 
     def __init__(_self, conf):
         _self.conf = conf
-        #colocar nossos vetores de entrada
         _self.entrada = []
         _self.foods = np.array([[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -130,6 +129,7 @@ class ABC:
             _self.progressbar = progressbar.ProgressBar(max_value=_self.conf.MAXIMUM_EVALUATION)
         if (not(conf.RANDOM_SEED)):
             random.seed(conf.SEED)
+
     #Le csv de entrada
     def readCsv(_self):
         with open('entrada1.csv') as csv_file:
@@ -158,12 +158,13 @@ class ABC:
 
             print("Processed " +str(line_count)+ " lines.")
 
+    #calcula funcao objetivo
     def calculate_function(_self, sol, finish, w1, w2, w3):
         try:
             if (_self.conf.SHOW_PROGRESS):
                 _self.progressbar.update(_self.evalCount)
 
-            return (w2*_self.f2(sol))+ (w3*_self.f3(finish))+(w1*_self.f1(finish))
+            return (w1*_self.f2(sol))+ (w2*_self.f3(finish))+(w2*_self.f1(finish))
 
         except ValueError as err:
             print(
@@ -190,11 +191,35 @@ class ABC:
                _self.progressbar.finish()
         return status
 
+    def verificaPred(_self, sol, troca1, troca2):
+            if(_self.entrada[sol[troca1]-1][2][0] != 0):
+                for i in range(len(_self.entrada[sol[troca1]-1][2])):
+                    j = 0
+                    existe = 0
+                    while j < troca1:
+                        if(sol[j] == _self.entrada[sol[troca1]-1][2][i]):
+                            existe = 1
+                        j+=1
+                    if(existe == 0):
+                        return 0
+            if(_self.entrada[sol[troca2]-1][2][0] != 0):
+                for i in range(len(_self.entrada[sol[troca2]-1][2])):
+                    j = 0
+                    existe = 0
+                    while j < troca2:
+                        if(sol[j] == _self.entrada[sol[troca2]-1][2][i]):
+                            existe = 1
+                        j+=1
+                    if(existe == 0):
+                        return 0
+
+            return 1
+
     def f1(_self, sol):
         soma = 0
         for i in range(0,10):
-            if int(_self.entrada[i][3]) > int(sol[i]):
-                soma+= int(_self.entrada[i][3])-int(sol[i])
+            if int(_self.entrada[i][3]) < int(sol[i]):
+                soma+= int(sol[i])-int(_self.entrada[i][3])
         return soma
 
     def f2(_self, sol):
@@ -210,6 +235,7 @@ class ABC:
             if i > maximo :
                 maximo = i
         return maximo
+
 
     #Recursao que calcula o earliest time posible
     def earliest_r(_self, index,sol):
@@ -288,7 +314,7 @@ class ABC:
                 _self.globalOptsf3 = np.copy(_self.vetorf3[i])
                 _self.globalParams = np.copy(_self.foods[i][:])
                 # print()
-                print("Best solution " +str(_self.globalOptsf1)+" com os valores "+ str(_self.globalParams))
+                # print("Best solution " +str(_self.globalOptsf1)+" com os valores "+ str(_self.globalParams))
 
 
     def init(_self, index):
@@ -296,36 +322,54 @@ class ABC:
             i =0
             #Primeira parte: cria a lista de tarefa obedecendo as predecessoes
             #Segunda parte: atribui um processador de forma aleatoria
-            while i < int(_self.conf.DIMENSION/2):
-                ordenacao = []
+            ordenacao = []
+            ordenacao2= []
+            while i < 10:
                 ordena = 1
+                # print("Index " + str(index))
                 #Para cada tarefa lida do csv
                 # 1 ordena todas as tarefas sem predecessores
                 # 2  ordena as tarefas cujos predecessoes ja foram ordenados
                 # Repete a etapa 2 ate que todas as tarefas sejam ordenadas
                 for j in range(len(_self.entrada)):
                     #Tarefas sem predecessores
+                    ordena = 1
                     if(_self.entrada[j][2][0] == 0):
-                        if((len(_self.foods[index]) >0) and (_self.entrada[j][0] not in _self.foods[index])) :
-                            ordenacao.append(_self.entrada[j][0])
-                        elif(len(_self.foods[index]) == 0):
-                            ordenacao.append(_self.entrada[j][0])
+                        # print("ENtrei no if")
+                        # print(j)
+                        if((len(ordenacao) >0) and (_self.entrada[j][0] not in ordenacao)) :
+                            # ordenacao.append(_self.entrada[j][0])
+                            ordenacao2.append(_self.entrada[j][0])
+
+                        elif(len(ordenacao) == 0):
+                            # ordenacao.append(_self.entrada[j][0])
+                            ordenacao2.append(_self.entrada[j][0])
+
                     #Tarefas que os predecessores ja foram ordenados
                     else:
+                        # print("else")
+                        # print(j)
+
                         for k in range(len(_self.entrada[j][2])):
-                            if(_self.entrada[j][2][k] not in _self.foods[index]):
+                            # print(_self.entrada[j][2][k]-1)
+                            if(_self.entrada[j][2][k] not in ordenacao):
                                 ordena = 0
-                        if ((ordena) and (_self.entrada[j][0] not in _self.foods[index])):
-                            ordenacao.append(_self.entrada[j][0])
+                        if ((ordena) and (_self.entrada[j][0] not in ordenacao)):
+                            # ordenacao.append(_self.entrada[j][0])
+                            ordenacao2.append(_self.entrada[j][0])
+
 
                 #Ordena de forma aleatoria
-                while(len(ordenacao)):
-                    r = random.choice(ordenacao)
-                    while r not in ordenacao:
-                        r = random.choice(ordenacao)
+                # print(ordenacao2)
+                while(len(ordenacao2)):
+                    r = random.choice(ordenacao2)
+                    while r not in ordenacao2:
+                        r = random.choice(ordenacao2)
                     _self.foods[index][i] = r
-                    ordenacao.remove(r)
+                    ordenacao.append(r)
+                    ordenacao2.remove(r)
                     i+=1
+
 
            #Atribui um processador de forma aleatoria
             r = random.choice([1,2,3,4])
@@ -348,13 +392,18 @@ class ABC:
             _self.foods[index][18] = r
             r = random.choice([1,2,3,4])
             _self.foods[index][19] = r
+            # print(index)
+            print(_self.foods[index])
             _self.solution = np.copy(_self.foods[index][:])
             _self.earliest[index] = _self.calcula_earliest(_self.solution)
             _self.real[index],_self.finish[index] = _self.calcula_real(_self.solution)
             _self.vetorf1[index] = _self.f1(_self.finish[index])
             _self.vetorf2[index] = _self.f2(_self.solution)
             _self.vetorf3[index] = _self.f3(_self.finish[index])
-            # _self.f[index] = _self.calculate_function(_self.solution,_self.finish[index])
+            w1 = 1/(np.amax(_self.vetorf1)-np.amin(_self.vetorf1) )
+            w2 = 1/(np.amax(_self.vetorf2)-np.amin(_self.vetorf2) )
+            w3 = 1/(np.amax(_self.vetorf3)-np.amin(_self.vetorf3) )
+            _self.f[index] = _self.calculate_function(_self.solution,_self.finish[index],w1, w2, w3)
             _self.fitness[index] = _self.calculate_fitness(_self.f[index])
             _self.trial[index] = 0
 
@@ -369,15 +418,14 @@ class ABC:
         for i in range(_self.conf.FOOD_NUMBER):
             _self.f[i] = _self.calculate_function(_self.foods[i][:],_self.finish[i], w1, w2, w3)
         _self.globalOpt = np.copy(_self.f[0])
-        _self.globalOptsf1 = np.copy(_self.vetorf1[0])
-        _self.globalOptsf2 = np.copy(_self.vetorf2[0])
-        _self.globalOptsf3 = np.copy(_self.vetorf3[0])
+        _self.globalOptsf1 = np.copy(np.amin(_self.vetorf1))
+        _self.globalOptsf2 = np.copy(np.amin(_self.vetorf2))
+        _self.globalOptsf3 = np.copy(np.amin(_self.vetorf3))
         _self.globalParams = np.copy(_self.foods[0][:])
 
     def send_employed_bees(_self):
         i = 0
         while (i < _self.conf.FOOD_NUMBER) and (not (_self.stopping_condition())):
-
 
             #Seleciona o vizinho que vai visitar aleatoriamente
             r = random.random()
@@ -414,21 +462,31 @@ class ABC:
                 # print(_self.solution)
             else:
                 # print("Exchange 2")
-                r = random.choice([0,1,2,3,4,5,6,7,8,9])
-                _self.param2change = (int)(r)
-                r = random.choice([0,1,2,3,4,5,6,7,8,9])
-                while r  == _self.param2change:
-                    r = random.choice([0,1,2,3,4,5,6,7,8,9])
-                secondparam2change = (int)(r)
-                # print(_self.solution)
-                aux = _self.solution[secondparam2change]
-                _self.solution[secondparam2change] = _self.solution[_self.param2change]
-                _self.solution[_self.param2change] = aux
+                    ordena = 0
+                    solution = _self.solution
+                    while( ordena == 0):
+                        solution = np.copy(_self.solution)
+                        r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        _self.param2change = (int)(r)
+                        r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        while r  == _self.param2change:
+                            r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        secondparam2change = (int)(r)
+                        aux = solution[secondparam2change]
+                        solution[secondparam2change] = solution[_self.param2change]
+                        solution[_self.param2change] = aux
+                        ordena = _self.verificaPred(solution,_self.param2change,secondparam2change)
+                    _self.solution = solution
+
+
                 # print("Troca "+ str(secondparam2change)+ " com "+ str(_self.param2change))
                 # print(_self.solution)
 
             earliest = _self.calcula_earliest(_self.solution)
             real,finish = _self.calcula_real(_self.solution)
+            _self.vetorf1[i] = _self.f1(finish)
+            _self.vetorf2[i] = _self.f2(_self.solution)
+            _self.vetorf3[i] = _self.f3(finish)
 
 
             #Continua igual, temos que alterar a calculate_function
@@ -469,15 +527,66 @@ class ABC:
                     r = random.random()
                     _self.neighbour = (int)(r * _self.conf.FOOD_NUMBER)
                 _self.solution = np.copy(_self.foods[i][:])
+                # print(_self.solution)
 
-                r = random.choice([1,2,3,4])
-                _self.solution[_self.param2change] = r
 
+                r = random.choice([0, 1,2])
+                real,finish = _self.calcula_real(_self.solution)
+                # print("Finish 1")
+                # print(finish)
+                if(r == 0):
+                    # print("Swap")
+                    r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                    _self.param2change = (int)(r)
+                    r = random.choice([1,2,3,4])
+                    _self.solution[_self.param2change] = r
+                elif(r == 1):
+                    # print("Exchange 1")
+                    r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                    _self.param2change = (int)(r)
+                    r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                    while r  == _self.param2change:
+                        r = random.choice([10,11,12,13,14,15,16,17,18,19])
+                    secondparam2change = (int)(r)
+                    # print(_self.solution)
+                    aux = _self.solution[secondparam2change]
+                    _self.solution[secondparam2change] = _self.solution[_self.param2change]
+                    _self.solution[_self.param2change] = aux
+                    # print("Troca "+ str(secondparam2change)+ " com "+ str(_self.param2change))
+                    # print(_self.solution)
+                else:
+                    ordena = 0
+                    solution = _self.solution
+                    while( ordena == 0):
+                        solution = np.copy(_self.solution)
+                        r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        _self.param2change = (int)(r)
+                        r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        while r  == _self.param2change:
+                            r = random.choice([0,1,2,3,4,5,6,7,8,9])
+                        secondparam2change = (int)(r)
+                        aux = solution[secondparam2change]
+                        solution[secondparam2change] = solution[_self.param2change]
+                        solution[_self.param2change] = aux
+                        ordena = _self.verificaPred(solution,_self.param2change,secondparam2change)
+                    _self.solution = solution
+
+                # print(_self.solution)
                 earliest = _self.calcula_earliest(_self.solution)
                 real,finish = _self.calcula_real(_self.solution)
+                # print("Finish 2")
+                # print(finish)
+                _self.vetorf1[i] = _self.f1(finish)
+                # print("i "+ str(i))
+                # print(_self.vetorf1[i])
+                _self.vetorf2[i] = _self.f2(_self.solution)
+                _self.vetorf3[i] = _self.f3(finish)
+                # print(_self.vetorf1[i])
+                # print("i "+ str(i))
                 w1 = 1/(np.amax(_self.vetorf1)-np.amin(_self.vetorf1) )
                 w2 = 1/(np.amax(_self.vetorf2)-np.amin(_self.vetorf2) )
                 w3 = 1/(np.amax(_self.vetorf3)-np.amin(_self.vetorf3) )
+                # print("Pesos "+str(w1)+" "+str(w2)+" "+str(w3))
                 _self.ObjValSol = _self.calculate_function(_self.solution,finish, w1, w2, w3)
                 _self.FitnessSol = _self.calculate_fitness(_self.ObjValSol)
                 if (_self.FitnessSol > _self.fitness[i] and _self.conf.MINIMIZE == True) or (_self.FitnessSol <= _self.fitness[i] and _self.conf.MINIMIZE == False):
